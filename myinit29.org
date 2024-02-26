@@ -10,6 +10,7 @@
 (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 (package-initialize)
+(package-refresh-contents t)
 
 (custom-set-variables '(use-package-always-ensure t))
 (custom-set-variables '(use-package-always-defer t))
@@ -879,7 +880,7 @@ config de base du dépôt github
   ;;;; 5. No project support
   ;; (setq consult-project-function nil)
 
-  (setq consult-fontify-max-size 1024)
+  (setq consult-fontify-max-size 4096)
 )
 #+end_src
 
