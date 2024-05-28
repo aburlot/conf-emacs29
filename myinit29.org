@@ -14,6 +14,15 @@
 
 (custom-set-variables '(use-package-always-ensure t))
 (custom-set-variables '(use-package-always-defer t))
+
+(use-package auto-package-update
+  :custom
+  (auto-package-update-interval 7)
+  (auto-package-update-prompt-before-update t)
+  (auto-package-update-hide-results t)
+  :config
+  (auto-package-update-maybe)
+  (auto-package-update-at-time "09:00"))
 #+end_src
 
 ** Paramètres
@@ -333,6 +342,7 @@
 
 (global-set-key [C-M-tab] 'other-window) ;; Naviguer entre fenetre
 (global-set-key [C-M-S-iso-lefttab] (kbd "\C-u -\C-x o")) ;; Fenêtre précédente
+(global-set-key (kbd "C-x p") (kbd "\C-u -\C-x o"))
 
 ;; tab-bar-mode
 (global-set-key (kbd "C-<prior>") 'tab-bar-switch-to-prev-tab)
@@ -487,7 +497,6 @@
   (which-key-mode))
 
 #+end_src
-
 *** BookmarkPlus
 #+begin_src elisp
 (add-to-list 'load-path (concat user-emacs-directory "mylisp/bookmarkplus"))
@@ -501,7 +510,7 @@ On rajoute le crochet à Eglot
   :ensure t)
 #+end_src
 *** Modeline
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (use-package doom-modeline
   :ensure t
   :hook
@@ -512,6 +521,20 @@ On rajoute le crochet à Eglot
   ;; :custom-face
   ;; (mode-line ((t (:height 0.95)))
   )
+#+end_src
+
+#+begin_src elisp
+(use-package moody
+  :ensure t
+  :config
+  (moody-replace-mode-line-buffer-identification)
+  (moody-replace-vc-mode)
+  (moody-replace-eldoc-minibuffer-message-function)
+  (setq moody-mode-line-height 20))
+
+(require 'moody)
+;; (set-face-attribute 'mode-line nil :box nil)
+;; (set-face-attribute 'mode-line-inactive nil :box nil)
 #+end_src
 
 *** ediff
@@ -572,6 +595,34 @@ The following keybindings are defined:
 - To apply all changes regardless of whether or not buffer is read-only.
     (setq wgrep-change-readonly-file t)
 #+end_quote
+*** Highlight-symbol
+#+begin_src elisp
+(use-package highlight-symbol)
+#+end_src
+*** Casual for calc
+#+begin_src elisp
+;; Transient for calc !!!
+(use-package casual
+  :ensure t
+  :bind (:map calc-mode-map ("C-o" . 'casual-main-menu)))
+#+end_src
+*** YAML
+#+begin_src elisp
+(use-package flymake-yamllint
+  :hook
+  (yaml-mode . flymake-yamllint-setup))
+(use-package yaml-mode
+  :hook
+  (yaml-mode . flymake-mode))
+#+end_src
+*** Transient for isearch
+#+begin_src elisp
+(use-package cc-isearch-menu
+  :ensure t
+  )
+(require 'cc-isearch-menu)
+(define-key isearch-mode-map (kbd "<f6>") 'cc-isearch-menu-transient)
+#+end_src
 ** All-the-icons
 #+begin_src elisp
 ;; Des icônes
@@ -585,10 +636,10 @@ The following keybindings are defined:
   :init
   (all-the-icons-completion-mode))
 
-(use-package all-the-icons-dired
-  :ensure t
-  :hook
-  (dired-mode . all-the-icons-dired-mode))
+;; (use-package all-the-icons-dired
+;;   :ensure t
+;;   :hook
+;;   (dired-mode . all-the-icons-dired-mode))
 
 ;; Mauvais alignement
 ;; (use-package all-the-icons-ibuffer
@@ -603,6 +654,9 @@ The following keybindings are defined:
 (define-key dired-mode-map (kbd "^") (lambda () (interactive) (find-alternate-file "..")))  ; was dired-up-directory
 (setq dired-listing-switches "-lBgoFh --group-directories-first")
 (put 'dired-find-alternate-file 'disabled nil)
+(use-package casual-dired
+  :ensure t
+  :bind (:map dired-mode-map ("C-o" . 'casual-dired-tmenu)))
 ;; (use-package dired-x
 ;;   :ensure t)
 
@@ -981,6 +1035,7 @@ Depuis le dépôt github
   (setq highlight-indent-guides-method 'bitmap))
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 (add-hook 'prog-mode-hook #'highlight-indent-guides-mode)
+(add-hook 'prog-mode-hook #'hs-minor-mode)
 #+end_src
 
 ** Magit
@@ -1037,6 +1092,15 @@ Minimaliste org config
    (C . t)))
 
 #+end_src
+
+#+begin_src elisp
+(use-package org-ref
+  :ensure t
+  :config
+  (setq doi-utils-download-pdf nil))
+
+(use-package async) ; pour org-ref
+#+end_src
 *** Caldav
 Installation du paquet
 #+begin_src elisp
@@ -1058,7 +1122,9 @@ Installation du paquet
   :ensure t
   :hook
   (prog-mode . eglot-ensure)
-  (eglot-managed-mode . eldoc-box-hover-mode))
+  (eglot-managed-mode . eldoc-box-hover-mode)
+  :bind
+  ("<f7>" . eglot-rename))
 #+end_src
 ** C/C++
 #+begin_src elisp
@@ -1081,6 +1147,11 @@ Installation du paquet
 (global-set-key [C-\<] 'python-indent-shift-left)
 (global-set-key [C-\>] 'python-indent-shift-right)
 
+#+end_src
+
+Mon bon ein
+#+begin_src elisp
+(use-package ein)
 #+end_src
 ** Latex
 #+begin_src elisp
