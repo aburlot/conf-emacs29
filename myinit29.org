@@ -604,7 +604,7 @@ The following keybindings are defined:
 ;; Transient for calc !!!
 (use-package casual
   :ensure t
-  :bind (:map calc-mode-map ("C-o" . 'casual-main-menu)))
+  :bind (:map calc-mode-map ("C-o" . 'casual-calc-tmenu)))
 #+end_src
 *** YAML
 #+begin_src elisp
@@ -622,6 +622,18 @@ The following keybindings are defined:
   )
 (require 'cc-isearch-menu)
 (define-key isearch-mode-map (kbd "<f6>") 'cc-isearch-menu-transient)
+#+end_src
+*** Casual avy
+Avy est une dépendance de org-ref
+#+begin_src elisp
+(use-package casual-avy
+  :ensure t
+  :bind ("M-g" . casual-avy-tmenu))
+#+end_src
+*** Edit tag
+#+begin_src elisp :tangle no
+(add-to-list 'load-path (concat user-emacs-directory "mylisp/"))
+(require 'tag-edit-mode)
 #+end_src
 ** All-the-icons
 #+begin_src elisp
