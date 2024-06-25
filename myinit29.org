@@ -1245,13 +1245,15 @@ Mon bon ein
   :ensure t
   :config
   ;; OPTIONAL configuration
-  (setq-default gptel-model "codellama:latest"
-                gptel-backend (gptel-make-ollama
-                               "Ollama"
-                               :host "localhost:11434"
-                               :models '("codellama:latest")
-                               :stream t))
-  (setq gptel-default-mode 'org-mode))
+  (setq gptel-model "codellama:latest"
+        gptel-backend (gptel-make-ollama "Ollama"
+                        :host "localhost:11434"
+                        :models '("codellama:latest" "mistral:latest")
+                        :stream t))
+  (setq gptel-default-mode 'org-mode)
+  ;(setq gptel-post-response-functions 'org-fill-paragraph)
+  :hook
+  (gptel-post-response-functions . 'org-fill-paragraph))
 
 #+end_src
 *** ellama
