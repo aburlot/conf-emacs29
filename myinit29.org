@@ -1,6 +1,20 @@
 #+TITLE:Config pour emacs29
 #+PROPERTY: header-args :tangle myinit29.el
 
+** early init stuff
+Use with caution!
+#+begin_src elisp :tangle ~/.config/emacs/early-init.el
+;; Remove earlier the graphical stuff
+(message "enters early init")
+(menu-bar-mode -1) ;; Cache la barre de menu
+(scroll-bar-mode -1) ;; Supprimer les scroll bars
+(tool-bar-mode -1) ;; Cache la barre d'outils
+#+end_src
+** Auto-generated config files
+#+begin_src elisp
+(setq custom-file (locate-user-emacs-file "custom.el"))
+(load custom-file :no-error-if-file-is-missing)
+#+end_src
 ** Packages
 #+begin_src elisp
 ;; Packages
@@ -8,9 +22,16 @@
 (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-(package-initialize)
-(package-refresh-contents t)
+;(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+;(package-initialize) ;; 2025-01-06 : inutile
+;(package-refresh-contents t)
+
+;; Remove warnings, from https://protesilaos.com/codelog/2024-11-28-basic-emacs-configuration/
+(add-to-list 'display-buffer-alist
+             '("\\`\\*\\(Warnings\\|Compile-Log\\)\\*\\'"
+               (display-buffer-no-window)
+               (allow-no-window . t)))
+
 
 (custom-set-variables '(use-package-always-ensure t))
 (custom-set-variables '(use-package-always-defer t))
@@ -22,7 +43,8 @@
   (auto-package-update-hide-results t)
   :config
   (auto-package-update-maybe)
-  (auto-package-update-at-time "09:00"))
+  (auto-package-update-at-time "09:00")
+  (setq auto-package-update-delete-old-versions t))
 #+end_src
 
 ** Paramètres
@@ -51,12 +73,10 @@
 ;;(set-face-attribute 'default nil :height 110) ;; Taille de la police à 10pt
 (load-library "iso-transl") ;; Ajout pour utilisation de l'accent circonflexe
 (fset 'yes-or-no-p 'y-or-n-p) ;; 'yes' or 'no' => 'y' or 'n'
-(scroll-bar-mode -1) ;; Supprimer les scroll bars
 (tooltip-mode -1) ;; Supprime les infosbulles, texte dans le mini buffer
-(menu-bar-mode -1) ;; Cache la barre de menu
-(tool-bar-mode -1) ;; Cache la barre d'outils
+
 ;;(global-linum-mode t) ;; Affiche le numéro de ligne
-(delete-selection-mode 1)
+;(delete-selection-mode 1)
 ;; (global-hl-line-mode 0); Highlight current row
 (setq ring-bell-function 'ignore) ;; Supprimer l'alarme (son et autre)
 (setq-default cursor-type 'bar) ;; Curseur rectangle -> barre
@@ -80,8 +100,51 @@
 (setq warning-minimum-level :emergency) ;; met dans les log mais n'affiche pas si en dessous de emergency
 ;; (setq bookmark-set-fringe-mark 'bookmark-mark) ; nil n'a rien fait ?
 (setq gc-cons-threshold (* 256 1024 1024)) ;; trouver ici https://github.com/minad/consult/issues/329 pour limiter le temps de consult-line ?
+(setq frame-resize-pixelwise t) ;; to fit when half screen
+
+;; Delete selection
+(use-package delsel
+  :ensure nil ; no need to install it as it is built-in
+  :hook (after-init . delete-selection-mode))
+
 #+end_src
 
+*** dir locals
+#+begin_src elisp
+
+;; my dir locals
+;(put 'project-vc-external-roots-function 'safe-local-variable #'stringp)
+
+#+end_src
+** Overloaded C-g
+#+begin_src elisp
+(defun prot/keyboard-quit-dwim ()
+  "Do-What-I-Mean behaviour for a general `keyboard-quit'.
+
+The generic `keyboard-quit' does not do the expected thing when
+the minibuffer is open.  Whereas we want it to close the
+minibuffer, even without explicitly focusing it.
+
+The DWIM behaviour of this command is as follows:
+
+- When the region is active, disable it.
+- When a minibuffer is open, but not focused, close the minibuffer.
+- When the Completions buffer is selected, close it.
+- In every other case use the regular `keyboard-quit'."
+  (interactive)
+  (cond
+   ((region-active-p)
+    (keyboard-quit))
+   ((derived-mode-p 'completion-list-mode)
+    (delete-completion-window))
+   ((> (minibuffer-depth) 0)
+    (abort-recursive-edit))
+   (t
+    (keyboard-quit))))
+
+(define-key global-map (kbd "C-g") #'prot/keyboard-quit-dwim)
+
+#+end_src
 ** Sauvegardes
 #+begin_src elisp
 (setq backup-by-copying t)
@@ -93,6 +156,40 @@
 #+end_src
 
 ** Fonctions
+*** Tentative d'une fonction pour définir un projet externe
+On définit =my-external-roots= dans un =.dir-locals.el=.
+#+begin_src elisp
+;; By GPT!
+(defun my-project-vc-external-roots ()
+  "Return a list of external roots for the project from `my-external-roots`."
+  (or (and (boundp 'my-external-roots) my-external-roots)
+      (list)))  ;; Fallback to an empty list if the variable is not set
+
+#+end_src
+*** Tentative d'une fonction pour les linked projects
+#+begin_src elisp
+(defvar projectile-linked-projects nil
+  "List of locations of linked projects.
+
+Should be set in a .dir-locals.el")
+
+(defun projectile-linked-project-files ()
+  "Get a list of all files in current and linked projects."
+  (cl-mapcan
+   (lambda (project)
+     (when (file-exists-p project)
+       (mapcar (lambda (file)
+                 (expand-file-name file project))
+               (projectile-project-files project))))
+   (list (projectile-project-root) projectile-linked-projects)))
+
+(defun projectile-find-file-in-linked-projects ()
+  "Jump to a file in the current or linked projects."
+  (interactive)
+  (find-file (projectile-completing-read "Find file in projects: " (projectile-linked-project-files))))
+#+end_src
+
+*** Toutes les autres fonctions
 #+begin_src elisp
 ;; = Revert buffer sans confirmation
 (defun revert-buffer-no-confirm ()
@@ -333,16 +430,16 @@
 ;; (global-set-key [f7] 'split-window-horizontally) ;; Raccourci pour séparation horizontale (gauche droite)
 (global-set-key [f8] 'revert-buffer-no-confirm) ;; recharger le fichier depuis le disque (sans confirmation)
 
-(global-set-key [(control f9)] 'highlight-symbol)
-(global-set-key [f9] 'highlight-symbol-next)
-(global-set-key [(shift f9)] 'highlight-symbol-prev)
-(global-set-key [(meta f9)] 'highlight-symbol-query-replace)
+(global-set-key (kbd "C-c <f9>") 'symbol-overlay-put)
+(global-set-key (kbd "<f9>") 'symbol-overlay-jump-next)
+;; (global-set-key [(shift f9)] 'highlight-symbol-prev)
+;; (global-set-key [(meta f9)] 'highlight-symbol-query-replace)
 ;; F10 : ouvre le menu d'emacs
 (global-set-key [f12] 'comment-or-uncomment-region-or-line)
 
 (global-set-key [C-M-tab] 'other-window) ;; Naviguer entre fenetre
 (global-set-key [C-M-S-iso-lefttab] (kbd "\C-u -\C-x o")) ;; Fenêtre précédente
-(global-set-key (kbd "C-x p") (kbd "\C-u -\C-x o"))
+;(global-set-key (kbd "C-x p") (kbd "\C-u -\C-x o"))
 
 ;; tab-bar-mode
 (global-set-key (kbd "C-<prior>") 'tab-bar-switch-to-prev-tab)
@@ -531,7 +628,6 @@ On rajoute le crochet à Eglot
   (moody-replace-vc-mode)
   (moody-replace-eldoc-minibuffer-message-function)
   (setq moody-mode-line-height 20))
-
 (require 'moody)
 ;; (set-face-attribute 'mode-line nil :box nil)
 ;; (set-face-attribute 'mode-line-inactive nil :box nil)
@@ -595,10 +691,17 @@ The following keybindings are defined:
 - To apply all changes regardless of whether or not buffer is read-only.
     (setq wgrep-change-readonly-file t)
 #+end_quote
-*** Highlight-symbol
-#+begin_src elisp
-(use-package highlight-symbol)
+*** Symbol overlay
+J'utilise un autre système, symbol-overlay
+#+begin_src elisp :tangle no
+;(use-package highlight-symbol)
 #+end_src
+
+#+begin_src elisp
+(use-package symbol-overlay
+  :ensure t)
+#+end_src
+
 *** Casual for calc
 #+begin_src elisp
 ;; Transient for calc !!!
@@ -616,7 +719,7 @@ The following keybindings are defined:
   (yaml-mode . flymake-mode))
 #+end_src
 *** Transient for isearch
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (use-package cc-isearch-menu
   :ensure t
   )
@@ -625,7 +728,7 @@ The following keybindings are defined:
 #+end_src
 *** Casual avy
 Avy est une dépendance de org-ref
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (use-package casual-avy
   :ensure t
   :bind ("M-g" . casual-avy-tmenu))
@@ -635,28 +738,35 @@ Avy est une dépendance de org-ref
 (add-to-list 'load-path (concat user-emacs-directory "mylisp/"))
 (require 'tag-edit-mode)
 #+end_src
-** All-the-icons
+*** Édition dans firefox/chrome avec emacs
 #+begin_src elisp
-;; Des icônes
-(use-package all-the-icons
+(use-package atomic-chrome
+  :ensure t)
+(atomic-chrome-start-server)
+#+end_src
+** Styling: theme and icons
+Des icônes
+#+begin_src elisp
+(use-package nerd-icons
   :ensure t)
 
-(use-package all-the-icons-completion
+;; (use-package nerd-icons-completion
+;;   :ensure t
+;;   :after marginalia
+;;   :config
+;;   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+;;
+;; (use-package nerd-icons-corfu
+;;   :ensure t
+;;   :after corfu
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
+(use-package nerd-icons-dired
   :ensure t
-  :after (marginalia all-the-icons)
-  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
-  :init
-  (all-the-icons-completion-mode))
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
 
-;; (use-package all-the-icons-dired
-;;   :ensure t
-;;   :hook
-;;   (dired-mode . all-the-icons-dired-mode))
-
-;; Mauvais alignement
-;; (use-package all-the-icons-ibuffer
-;;   :ensure t
-;;   :hook (ibuffer-mode . all-the-icons-ibuffer-mode))
 #+end_src
 ** Dired
 #+begin_src elisp
@@ -829,7 +939,7 @@ config de base du dépôt github
 #+begin_src elisp
 ;; Example configuration for Consult
 (use-package consult
-  ;; Replace bindings. Lazily loaded due by `use-package'.
+  ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
@@ -842,6 +952,7 @@ config de base du dépôt github
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
          ;; Custom M-# bindings for fast register access
@@ -861,13 +972,12 @@ config de base du dépôt github
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
          ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)
-         ("M-s D" . consult-locate)
+         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s c" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
          ("M-s r" . consult-ripgrep)
          ("M-s l" . consult-line)
-         ;; ("C-s" . consult-line) ;; ajout perso pour remplacer swiper, en fait trop lent :/
          ("M-s L" . consult-line-multi)
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
@@ -890,15 +1000,12 @@ config de base du dépôt github
   ;; The :init configuration is always executed (Not lazy)
   :init
 
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
-
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
+  ;; Tweak the register preview for `consult-register-load',
+  ;; `consult-register-store' and the built-in commands.  This improves the
+  ;; register formatting, adds thin separator lines, register sorting and hides
+  ;; the window mode line.
   (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
 
   ;; Use Consult to select xref locations with preview
   (setq xref-show-xrefs-function #'consult-xref
@@ -930,23 +1037,7 @@ config de base du dépôt github
 
   ;; Optionally make narrowing help available in the minibuffer.
   ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-  ;; By default `consult-project-function' uses `project-root' from project.el.
-  ;; Optionally configure a different project root function.
-  ;;;; 1. project.el (the default)
-  ;; (setq consult-project-function #'consult--default-project--function)
-  ;;;; 2. vc.el (vc-root-dir)
-  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-  ;;;; 3. locate-dominating-file
-  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-  ;;;; 4. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-  ;;;; 5. No project support
-  ;; (setq consult-project-function nil)
-
-  (setq consult-fontify-max-size 4096)
+  ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
 )
 #+end_src
 
@@ -1128,7 +1219,7 @@ Installation du paquet
                       :inbox "~/MYCONFIG/EMACS-CONF/ORG-CALDAV/toto.org")))
   )
 #+end_src
-** Eglot
+** Eglot et projectile
 #+begin_src elisp
 (use-package eglot
   :ensure t
@@ -1137,6 +1228,17 @@ Installation du paquet
   (eglot-managed-mode . eldoc-box-hover-mode)
   :bind
   ("<f7>" . eglot-rename))
+#+end_src
+
+#+begin_src elisp
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode +1)
+  :bind (:map projectile-mode-map
+              ("C-c p" . projectile-command-map))
+  :config
+  (setq projectile-project-search-path '("~/ORG/" "~/GIT/")))
 #+end_src
 ** C/C++
 #+begin_src elisp
@@ -1151,10 +1253,15 @@ Installation du paquet
 #+end_src
 ** Python
 #+begin_src elisp
+;; Python config
+#+end_src
+
+#+begin_src elisp
 (use-package pyvenv
   :ensure t
   :config
-  (pyvenv-activate "/home/alan/INSTALL/PY-VENV/VPY311-EMACS/"))
+  (pyvenv-mode t)
+  (pyvenv-activate "/home/alan/MYCONFIG/EMACS/VPY/"))
 (setq python-indent-offset 4)
 (global-set-key [C-\<] 'python-indent-shift-left)
 (global-set-key [C-\>] 'python-indent-shift-right)
@@ -1165,6 +1272,7 @@ Mon bon ein
 #+begin_src elisp
 (use-package ein)
 #+end_src
+
 ** Latex
 #+begin_src elisp
 ;; Charger le fichier auctex au démarrage
