@@ -103,9 +103,9 @@ Use with caution!
 (setq frame-resize-pixelwise t) ;; to fit when half screen
 
 ;; Delete selection
-(use-package delsel
-  :ensure nil ; no need to install it as it is built-in
-  :hook (after-init . delete-selection-mode))
+;; (use-package delsel
+;;   :ensure nil ; no need to install it as it is built-in
+;;   :hook (after-init . delete-selection-mode))
 
 #+end_src
 
@@ -744,6 +744,15 @@ Avy est une dépendance de org-ref
   :ensure t)
 (atomic-chrome-start-server)
 #+end_src
+*** Shellcheck
+#+begin_src elisp
+(use-package flymake-shellcheck
+  :commands flymake-shellcheck-load
+  :init
+  (add-hook 'sh-mode-hook 'flymake-shellcheck-load)
+  :config
+  (sh-shellcheck-arguments . '("-e" "1090")))
+#+end_src
 ** Styling: theme and icons
 Des icônes
 #+begin_src elisp
@@ -1239,6 +1248,15 @@ Installation du paquet
               ("C-c p" . projectile-command-map))
   :config
   (setq projectile-project-search-path '("~/ORG/" "~/GIT/")))
+
+(setq my-projectile-safe-variables '(projectile-project-compilation-cmd
+                                     projectile-project-run-cmd
+                                     projectile-project-test-cmd
+                                     projectile-project-package-cmd
+                                     projectile-project-install-cmd
+                                     projectile-project-configure-cmd))
+(dolist (var my-projectile-safe-variables)
+  (put var 'safe-local-variable #'stringp))
 #+end_src
 ** C/C++
 #+begin_src elisp
