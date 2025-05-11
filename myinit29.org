@@ -3,7 +3,7 @@
 
 ** early init stuff
 Use with caution!
-#+begin_src elisp :tangle ~/.config/emacs/early-init.el
+#+begin_src elisp :tangle early-init.el
 ;; Remove earlier the graphical stuff
 (message "enters early init")
 (menu-bar-mode -1) ;; Cache la barre de menu
@@ -76,7 +76,7 @@ Use with caution!
 (tooltip-mode -1) ;; Supprime les infosbulles, texte dans le mini buffer
 
 ;;(global-linum-mode t) ;; Affiche le numéro de ligne
-;(delete-selection-mode 1)
+(delete-selection-mode 1)
 ;; (global-hl-line-mode 0); Highlight current row
 (setq ring-bell-function 'ignore) ;; Supprimer l'alarme (son et autre)
 (setq-default cursor-type 'bar) ;; Curseur rectangle -> barre
@@ -1203,6 +1203,12 @@ Minimaliste org config
    (shell . t)
    (C . t)))
 
+(setq org-capture-templates
+      '(("t" "Todo" entry (file+headline "~/ORG/GTD.org" "Tasks")
+         "** TODO %?\n  %i\n  %a")
+        ("j" "Journal" entry (file+datetree "~/ORG/Journal.org")
+         "* %?\n %i\n")))
+
 #+end_src
 
 #+begin_src elisp
@@ -1279,8 +1285,9 @@ Installation du paquet
   :ensure t
   :config
   (pyvenv-mode t)
-  (pyvenv-activate "/home/alan/MYCONFIG/EMACS/VPY/"))
-(setq python-indent-offset 4)
+  (pyvenv-activate "/home/alan/MYCONFIG/EMACS-CONF/VPY/")
+  (python-indent-offset . 4))
+
 (global-set-key [C-\<] 'python-indent-shift-left)
 (global-set-key [C-\>] 'python-indent-shift-right)
 
