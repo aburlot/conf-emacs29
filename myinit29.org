@@ -32,11 +32,11 @@ Use with caution!
                (display-buffer-no-window)
                (allow-no-window . t)))
 
-
 (custom-set-variables '(use-package-always-ensure t))
 (custom-set-variables '(use-package-always-defer t))
 
 (use-package auto-package-update
+  :defer t
   :custom
   (auto-package-update-interval 7)
   (auto-package-update-prompt-before-update t)
@@ -49,63 +49,64 @@ Use with caution!
 
 ** Paramètres
 #+begin_src elisp
-(setq user-full-name "Alan Burlot")
-(setq user-mail-address "alan.burlot@proton.me")
+  (setq user-full-name "Alan Burlot")
+  (setq user-mail-address "alan.burlot@proton.me")
 
-;; = Dimension de la fenêtre au démarrage
-(setq initial-frame-alist (quote ((fullscreen . maximized))))
-(setq default-frame-alist (quote ((fullscreen . maximized)
-				  (scroll-bar-mode -1))))
-;; = Ajout de dossiers au path d'emacs
-(add-to-list 'exec-path "~/MYCONFIG/SCRIPTS/")
+  ;; = Dimension de la fenêtre au démarrage
+  (setq initial-frame-alist (quote ((fullscreen . maximized))))
+  (setq default-frame-alist (quote ((fullscreen . maximized)
+  				  (scroll-bar-mode -1))))
+  ;; = Ajout de dossiers au path d'emacs
+  (add-to-list 'exec-path "~/MYCONFIG/SCRIPTS/")
 
-;; Récupération de variables d'environnement
-(getenv "CPLUS_INCLUDE_PATH")
+  ;; Récupération de variables d'environnement
+  (getenv "CPLUS_INCLUDE_PATH")
 
-;; = Thème
-(use-package color-theme-sanityinc-tomorrow
-  :ensure t)
+  ;; = Thème
+  (use-package color-theme-sanityinc-tomorrow
+    :ensure t)
 
-;; = Options diverses
-(setq inhibit-startup-screen t) ;; Désactive l'écran de démarrage
-(setq initial-scratch-message nil) ;; Désactive la doc dans *scratch*
-(load-theme 'sanityinc-tomorrow-night) ;; theme <3
-;;(set-face-attribute 'default nil :height 110) ;; Taille de la police à 10pt
-(load-library "iso-transl") ;; Ajout pour utilisation de l'accent circonflexe
-(fset 'yes-or-no-p 'y-or-n-p) ;; 'yes' or 'no' => 'y' or 'n'
-(tooltip-mode -1) ;; Supprime les infosbulles, texte dans le mini buffer
+  ;; = Options diverses
+  (put 'narrow-to-region 'disabled nil) ;; pour activer C-x n n
+  (setq inhibit-startup-screen t) ;; Désactive l'écran de démarrage
+  (setq initial-scratch-message nil) ;; Désactive la doc dans *scratch*
+  (load-theme 'sanityinc-tomorrow-night) ;; theme <3
+  ;;(set-face-attribute 'default nil :height 110) ;; Taille de la police à 10pt
+  (load-library "iso-transl") ;; Ajout pour utilisation de l'accent circonflexe
+  (fset 'yes-or-no-p 'y-or-n-p) ;; 'yes' or 'no' => 'y' or 'n'
+  (tooltip-mode -1) ;; Supprime les infosbulles, texte dans le mini buffer
 
-;;(global-linum-mode t) ;; Affiche le numéro de ligne
-(delete-selection-mode 1)
-;; (global-hl-line-mode 0); Highlight current row
-(setq ring-bell-function 'ignore) ;; Supprimer l'alarme (son et autre)
-(setq-default cursor-type 'bar) ;; Curseur rectangle -> barre
-(show-paren-mode 1) ;; Mise en surbrillance des parenthèses
-(setq show-paren-delay 0) ;; Ne pas attendre avant de mettre en surbrillance
-(setq-default fill-column 70) ;; Fill-column à 80
-(setq-default display-time-default-load-average nil) ;; Supprime la charge dans ml
-;; (setq-default display-time-format "%H:%M") ;; format de l'heure
-;; (setq-default select-enable-clipboard t) ;; Merge system and emacs clipboard
-(setq-default x-select-enable-clipboard-manager nil) ;; Arrêter de vouloir fusionner les clipboard
-(setq-default help-windows-select t) ;; focus sur la fenêtre d'aide
-(setq-default require-final-newline t) ;; ajoute une ligne à la fin du fichier
-(setq delete-trailing-whitespace t) ;; supprime les espaces en bout de ligne
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-(electric-pair-mode)
-(setq-default indent-tabs-mode nil) ;; pas de tabulation !
-;; (advice-add 'risky-local-variable-p :override #'ignore)
-(add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
-(add-to-list 'display-buffer-alist ;; ne pop pas le buffer
-	     (cons "\\*Async Shell Command\\*.*" (cons #'display-buffer-no-window nil)))
-(setq warning-minimum-level :emergency) ;; met dans les log mais n'affiche pas si en dessous de emergency
-;; (setq bookmark-set-fringe-mark 'bookmark-mark) ; nil n'a rien fait ?
-(setq gc-cons-threshold (* 256 1024 1024)) ;; trouver ici https://github.com/minad/consult/issues/329 pour limiter le temps de consult-line ?
-(setq frame-resize-pixelwise t) ;; to fit when half screen
-
-;; Delete selection
-;; (use-package delsel
-;;   :ensure nil ; no need to install it as it is built-in
-;;   :hook (after-init . delete-selection-mode))
+  ;;(global-linum-mode t) ;; Affiche le numéro de ligne
+  (delete-selection-mode 1)
+  ;; (global-hl-line-mode 0); Highlight current row
+  (setq ring-bell-function 'ignore) ;; Supprimer l'alarme (son et autre)
+  (setq-default cursor-type 'bar) ;; Curseur rectangle -> barre
+  (show-paren-mode 1) ;; Mise en surbrillance des parenthèses
+  (setq show-paren-delay 0) ;; Ne pas attendre avant de mettre en surbrillance
+  (setq-default fill-column 70) ;; Fill-column à 80
+  (setq-default display-time-default-load-average nil) ;; Supprime la charge dans ml
+  ;; (setq-default display-time-format "%H:%M") ;; format de l'heure
+  ;; (setq-default select-enable-clipboard t) ;; Merge system and emacs clipboard
+  (setq-default x-select-enable-clipboard-manager nil) ;; Arrêter de vouloir fusionner les clipboard
+  (setq-default help-windows-select t) ;; focus sur la fenêtre d'aide
+  (setq-default require-final-newline t) ;; ajoute une ligne à la fin du fichier
+  (setq delete-trailing-whitespace t) ;; supprime les espaces en bout de ligne
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+  (electric-pair-mode)
+  (setq-default indent-tabs-mode nil) ;; pas de tabulation !
+  ;; (advice-add 'risky-local-variable-p :override #'ignore)
+  (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+  (add-to-list 'display-buffer-alist ;; ne pop pas le buffer
+  	     (cons "\\*Async Shell Command\\*.*" (cons #'display-buffer-no-window nil)))
+  (setq warning-minimum-level :emergency) ;; met dans les log mais n'affiche pas si en dessous de emergency
+  ;; (setq bookmark-set-fringe-mark 'bookmark-mark) ; nil n'a rien fait ?
+  (setq gc-cons-threshold (* 256 1024 1024)) ;; trouver ici https://github.com/minad/consult/issues/329 pour limiter le temps de consult-line ?
+  (setq frame-resize-pixelwise t) ;; to fit when half screen
+  (repeat-mode)
+  ;; Delete selection
+  ;; (use-package delsel
+  ;;   :ensure nil ; no need to install it as it is built-in
+  ;;   :hook (after-init . delete-selection-mode))
 
 #+end_src
 
@@ -187,6 +188,16 @@ Should be set in a .dir-locals.el")
   "Jump to a file in the current or linked projects."
   (interactive)
   (find-file (projectile-completing-read "Find file in projects: " (projectile-linked-project-files))))
+#+end_src
+*** Recharger les dir locals
+#+begin_src elisp :tangle no
+(defun my-reload-dir-locals-for-current-buffer ()
+  "reload dir locals for the current buffer"
+  (interactive)
+  (let ((enable-local-variables :all))
+    (hack-dir-local-variables-non-file-buffer)))
+
+
 #+end_src
 
 *** Toutes les autres fonctions
@@ -446,22 +457,24 @@ Should be set in a .dir-locals.el")
 (global-set-key (kbd "C-<next>") 'tab-bar-switch-to-next-tab)
 
 ;; Déplacement avec les flèches
-					; (global-set-key (kbd "C-x <up>") 'windmove-up)
-					; (global-set-key (kbd "C-x <down>") 'windmove-down)
-					; (global-set-key (kbd "C-x <right>") 'windmove-right)
-					; (global-set-key (kbd "C-x <left>") 'windmove-left)
+(global-set-key (kbd "C-M-s-<up>") 'windmove-up)
+(global-set-key (kbd "C-M-s-<down>") 'windmove-down)
+(global-set-key (kbd "C-M-s-<right>") 'windmove-right)
+(global-set-key (kbd "C-M-s-<left>") 'windmove-left)
 
 ;; Déplacer l'écran de 5 lignes vers le bas
-(global-set-key (kbd "M-n") (lambda ()
-			      (interactive)
-			      (forward-line 5)
-			      (recenter)))
+;; (global-set-key (kbd "M-n") (lambda ()
+;; 			      (interactive)
+;; 			      (forward-line 5)
+;; 			      (recenter)))
+(global-set-key (kbd "M-n") 'flymake-goto-next-error)
 
 ;; Déplacer l'écran de 5 lignes vers le haut
-(global-set-key (kbd "M-p") (lambda ()
-			      (interactive)
-			      (forward-line -5)
-			      (recenter)))
+;; (global-set-key (kbd "M-p") (lambda ()
+;; 			      (interactive)
+;; 			      (forward-line -5)
+;; 			      (recenter)))
+(global-set-key (kbd "M-p") 'flymake-goto-previous-error)
 
 (global-set-key "\C-c\C-d" "\C-a\C- \C-e\M-w\C-m\C-a\C-y") ;; Duplique une ligne entière
 
@@ -987,6 +1000,7 @@ config de base du dépôt github
          ("M-s G" . consult-git-grep)
          ("M-s r" . consult-ripgrep)
          ("M-s l" . consult-line)
+         ("C-s" . consult-line)
          ("M-s L" . consult-line-multi)
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
@@ -1234,15 +1248,27 @@ Installation du paquet
                       :inbox "~/MYCONFIG/EMACS-CONF/ORG-CALDAV/toto.org")))
   )
 #+end_src
-** Eglot et projectile
+** Prog modes
+*** Custom
+#+begin_src elisp
+(use-package indent-bars
+  :ensure t
+  :hook
+  (prog-mode . indent-bars-mode))
+
+#+end_src
+*** Eglot et projectile
 #+begin_src elisp
 (use-package eglot
   :ensure t
   :hook
   (prog-mode . eglot-ensure)
   (eglot-managed-mode . eldoc-box-hover-mode)
+  :config
+  (add-to-list 'eglot-server-programs '((c++-mode c-mode) . ("clangd" "--clang-tidy")))
   :bind
   ("<f7>" . eglot-rename))
+(define-key prog-mode-map (kbd "C-c e") 'eglot-code-actions)
 #+end_src
 
 #+begin_src elisp
@@ -1253,9 +1279,11 @@ Installation du paquet
   :bind (:map projectile-mode-map
               ("C-c p" . projectile-command-map))
   :config
-  (setq projectile-project-search-path '("~/ORG/" "~/GIT/")))
+  (setq projectile-project-search-path '("~/ORG/" "~/GIT/"))
+  (setq projectile-per-project-compilation-buffer t))
 
-(setq my-projectile-safe-variables '(projectile-project-compilation-cmd
+(setq my-projectile-safe-variables '(projectile-project-name
+                                     projectile-project-compilation-cmd
                                      projectile-project-run-cmd
                                      projectile-project-test-cmd
                                      projectile-project-package-cmd
@@ -1264,7 +1292,12 @@ Installation du paquet
 (dolist (var my-projectile-safe-variables)
   (put var 'safe-local-variable #'stringp))
 #+end_src
-** C/C++
+
+#+begin_src elisp
+(use-package projectile-ripgrep
+  :ensure t)
+#+end_src
+*** C/C++
 #+begin_src elisp
 ;; Pour le C++
 (add-to-list 'auto-mode-alist '("\\.tpp\\'" . c++-mode))
@@ -1275,7 +1308,7 @@ Installation du paquet
 (add-hook 'cc-mode-common-hook #'hs-minor-mode)
 
 #+end_src
-** Python
+*** Python
 #+begin_src elisp
 ;; Python config
 #+end_src
@@ -1372,6 +1405,7 @@ Mon bon ein
 
 #+end_src
 ** LLM mode
+clef gemini : AIzaSyCf5HoeL0Ys5DDn1cV6Ka8ErjXGt-cC8tI
 *** gptel
 #+begin_src elisp
 (use-package gptel
@@ -1425,6 +1459,20 @@ Mon bon ein
 ;; 	    ("mixtral" . (make-llm-ollama
 ;; 			  :chat-model "mixtral:8x7b-instruct-v0.1-q3_K_M-4k"
 ;; 			  :embedding-model "mixtral:8x7b-instruct-v0.1-q3_K_M-4k")))))
+#+end_src
+*** aidermacs
+#+begin_src elisp :tangle no
+(use-package aidermacs
+  ;; :bind (("C-c a" . aidermacs-transient-menu))
+  :config
+  ; Set API_KEY in .bashrc, that will automatically picked up by aider or in elisp
+  ;; (setenv "ANTHROPIC_API_KEY" "sk-...")
+  ; defun my-get-openrouter-api-key yourself elsewhere for security reasons
+  ;; (setenv "OPENROUTER_API_KEY" (my-get-openrouter-api-key))
+  :custom
+  ; See the Configuration section below
+  (aidermacs-use-architect-mode t)
+  (aidermacs-default-model "sonnet"))
 #+end_src
 ** Mastodon
 
