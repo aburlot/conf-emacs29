@@ -1405,7 +1405,7 @@ Mon bon ein
 
 #+end_src
 ** LLM mode
-clef gemini : AIzaSyCf5HoeL0Ys5DDn1cV6Ka8ErjXGt-cC8tI
+
 *** gptel
 #+begin_src elisp
 (use-package gptel
